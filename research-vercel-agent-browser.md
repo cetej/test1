@@ -40,6 +40,51 @@ agent-browser fill @e2 "text"     # fill input by ref
 | Maturity | Early (v0.4.x) | Mature |
 | Windows support | Broken | Full |
 
+## Scaling & practical cost analysis
+
+### Token cost savings at scale
+
+| Scale | Playwright MCP cost | agent-browser cost | Savings |
+|-------|--------------------|--------------------|---------|
+| 100 tasks/day | ~$2.34/day | ~$0.42/day | ~$1.92/day |
+| 1,000 tasks/day | ~$23.40/day | ~$4.20/day | ~$19.20/day |
+| 10,000 tasks/day | ~$234/day | ~$42/day | ~$192/day |
+
+The real win is not dollars — it is **context window space**. A single screenshot = 15,000+ tokens. In multi-step browser tasks, Playwright MCP can exhaust the context window in a few steps. agent-browser keeps long autonomous sessions viable.
+
+### Scaling readiness (as of March 2026)
+
+- **154 open issues**, project is ~2 months old
+- **Parallel execution is undocumented** — DIY infrastructure required
+- **Windows support is broken**
+- **CI/CD**: Works headless-first, auto-detects Docker/K8s, but no dedicated CI docs
+- **Cloud scaling path**: Connect to Browserbase, Browserless, or Vercel Sandbox (beta)
+
+### Best use cases
+
+- AI coding agent verification loops (build → check in browser → fix → repeat)
+- Smoke testing during development
+- Form filling and basic interaction testing (~90s for 30 fields)
+
+### Poor fit for
+
+- Production E2E test suites (no test runner, assertions, or reporting)
+- Web scraping (4.3x slower, 7.4x more memory than traditional scrapers)
+- Cross-browser testing (Chrome only)
+
+### Alternatives for scaled production
+
+| Tool | Best for | Maturity |
+|------|---------|----------|
+| **Stagehand + Browserbase** | Production AI automation | Most production-ready |
+| **Browser Use** | Python ecosystem, autonomous agents | Mature (50K+ stars) |
+| **agent-browser** | Dev-loop verification, token savings | Young (~2 months) |
+| **Playwright MCP** | Full E2E testing, debugging | Most mature |
+
+### Verdict
+
+For "AI agent verifies its own work in browser" — **yes, worth it, token savings are real**. For scaling to thousands of production tests — **not ready yet**. Stagehand + Browserbase is the safer bet today. Emerging consensus: use Playwright for 80% of predictable steps, AI tools for the 20% requiring adaptability.
+
 ## Conclusion
 
 **agent-browser is NOT a Playwright replacement.** It is a complementary tool optimized for AI coding agents that need to verify UI with minimal context window consumption. For full E2E testing, cross-browser support, and production test suites, Playwright remains the better choice.
