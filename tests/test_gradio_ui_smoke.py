@@ -5,7 +5,8 @@ These tests verify that the Gradio interface loads correctly and UI elements
 are accessible. They do NOT run actual video generation (which requires GPU).
 
 Requirements:
-    pip install browser-use langchain-anthropic pytest pytest-asyncio
+    pip install browser-use langchain-anthropic pytest pytest-asyncio playwright
+    playwright install chromium
 
 Usage:
     # Start the Gradio app first (or use a running instance)
@@ -22,14 +23,35 @@ Environment variables:
 
 import asyncio
 import os
+import socket
 
 import pytest
 import pytest_asyncio
 from browser_use import Agent
-from langchain_anthropic import ChatAnthropic
+from browser_use.llm.anthropic.chat import ChatAnthropic
 
 GRADIO_URL = os.environ.get("GRADIO_URL", "http://localhost:7860")
 LLM = ChatAnthropic(model="claude-sonnet-4-6")
+
+
+def _gradio_is_reachable():
+    """Check if the Gradio server is reachable before running tests."""
+    from urllib.parse import urlparse
+
+    parsed = urlparse(GRADIO_URL)
+    host = parsed.hostname or "localhost"
+    port = parsed.port or 7860
+    try:
+        with socket.create_connection((host, port), timeout=2):
+            return True
+    except (socket.timeout, ConnectionRefusedError, OSError):
+        return False
+
+
+gradio_reachable = pytest.mark.skipif(
+    not _gradio_is_reachable(),
+    reason=f"Gradio server not reachable at {GRADIO_URL}",
+)
 
 
 @pytest.fixture(scope="module")
@@ -39,6 +61,7 @@ def event_loop():
     loop.close()
 
 
+@gradio_reachable
 @pytest.mark.asyncio
 async def test_gradio_app_loads():
     """Verify the Gradio app loads and shows the main title."""
@@ -55,6 +78,7 @@ async def test_gradio_app_loads():
     assert "success" in output, f"Gradio app did not load correctly: {output}"
 
 
+@gradio_reachable
 @pytest.mark.asyncio
 async def test_text_to_video_tab_elements():
     """Verify the Text-to-Video tab has all required UI elements."""
@@ -78,6 +102,7 @@ async def test_text_to_video_tab_elements():
     assert "success" in output, f"Missing UI elements: {output}"
 
 
+@gradio_reachable
 @pytest.mark.asyncio
 async def test_image_to_video_tab_elements():
     """Verify the Image-to-Video tab has all required UI elements."""
@@ -100,6 +125,7 @@ async def test_image_to_video_tab_elements():
     assert "success" in output, f"Missing UI elements: {output}"
 
 
+@gradio_reachable
 @pytest.mark.asyncio
 async def test_prompt_input_accepts_text():
     """Verify the prompt input field accepts text."""
@@ -119,6 +145,7 @@ async def test_prompt_input_accepts_text():
     assert "success" in output, f"Could not enter text in prompt: {output}"
 
 
+@gradio_reachable
 @pytest.mark.asyncio
 async def test_examples_are_visible():
     """Verify that example prompts are shown in the Text-to-Video tab."""
