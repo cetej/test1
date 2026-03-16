@@ -4,6 +4,20 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "context-mode"]
+    },
+    "shadcn-ui": {
+      "type": "http",
+      "url": "https://www.shadcn.io/api/mcp"
+    },
+    "web-accessibility": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "a11y-mcp-server"]
+    },
+    "web-design-guidelines": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "page-design-guide-mcp"]
     }
   }
 }
