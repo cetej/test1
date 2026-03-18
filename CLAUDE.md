@@ -100,6 +100,31 @@ snapshot_download("rain1011/pyramid-flow-sd3", local_dir="PATH", local_dir_use_s
 - `cpu_offloading=True`: Enables CPU offloading (<12GB VRAM)
 - `model.enable_sequential_cpu_offload()`: Even lower VRAM usage (<8GB)
 
+## Orchestration System
+
+This project includes a multi-agent orchestration system in `.claude/skills/` with shared memory in `.claude/memory/`.
+
+### When to use orchestration automatically
+
+- **Use `/orchestrate`** when the task has 3+ steps, touches multiple files/modules, has unknown scope, or requires research before implementation
+- **Work directly** when the task is a single-step edit, a simple question, or a clearly scoped change to 1-2 files
+
+When in doubt, prefer orchestration — the overhead is small but the quality improvement is significant.
+
+### Available skills
+
+| Skill | Role | When to use |
+|-------|------|-------------|
+| `/orchestrate` | Conductor — decomposes, delegates, coordinates | Complex or multi-step tasks |
+| `/scout` | Explorer — maps codebase context | Before implementing changes in unfamiliar code |
+| `/critic` | Reviewer — evaluates quality | After implementation, before finalizing |
+| `/scribe` | Recorder — maintains shared memory | After decisions or task completion |
+| `/skill-generator` | Creator — builds new skills | When a repeatable pattern has no skill yet |
+
+### Shared memory
+
+Always check `.claude/memory/learnings.md` before starting work — it contains accumulated patterns and anti-patterns from previous tasks. After completing work, record learnings and decisions via `/scribe`.
+
 ## Code Conventions
 
 - **Naming**: Modules follow `modeling_*.py` pattern for model components, `scheduling_*.py` for schedulers
