@@ -21,26 +21,35 @@ Parse `$ARGUMENTS` to determine:
 - **Depth**: Quick scan or thorough deep-dive?
 - **Scope**: Specific files, module, or entire codebase?
 
+## Cost Awareness
+
+Before exploring, check `.claude/memory/budget.md` for the current task tier:
+- **light**: Surface scan only (Step 1). No agent spawns. Max 3 files read.
+- **standard**: Steps 1-2. One agent spawn allowed if cross-module. Max 10 files.
+- **deep**: Steps 1-4. Agent spawns for thorough mapping. No hard file limit.
+
+After any agent spawn, update budget counters in `.claude/memory/budget.md`.
+
 ## Exploration Process
 
-### Step 1: Surface Scan
+### Step 1: Surface Scan (all tiers)
 - Glob for relevant file patterns
 - Grep for key terms, class names, function names
 - Map the directory structure involved
 
-### Step 2: Deep Dive
+### Step 2: Deep Dive (standard + deep)
 For each relevant file/module found:
 - Read and understand the code
 - Note public APIs, dependencies, patterns used
 - Identify entry points and data flow
 
-### Step 3: Context Map
+### Step 3: Context Map (deep only)
 For complex explorations, use `Agent(subagent_type: Explore)` to:
 - Trace call chains across multiple files
 - Find all usages of a specific function/class
 - Map relationships between modules
 
-### Step 4: Pattern Recognition
+### Step 4: Pattern Recognition (deep only)
 - What design patterns are used?
 - What conventions does the code follow?
 - Are there inconsistencies or tech debt?

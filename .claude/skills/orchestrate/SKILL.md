@@ -20,7 +20,13 @@ Before anything, read the shared memory:
 
 Apply any relevant learnings to the current task.
 
-## Phase 1: Understand
+## Phase 0: Budget Check
+
+Before anything else:
+1. Read `.claude/memory/budget.md`
+2. If a previous task is still active and over budget → alert the user before starting new work
+
+## Phase 1: Understand & Classify
 
 Parse `$ARGUMENTS` and determine:
 - **Goal**: What is the end result?
@@ -30,19 +36,39 @@ Parse `$ARGUMENTS` and determine:
 
 If unclear, ask the user before proceeding. Never guess on ambiguous requirements.
 
-## Phase 2: Scout
+### Assign Complexity Tier
 
-Delegate exploration to the scout:
+Based on scope, classify the task:
 
-Use the Agent tool with `subagent_type: Explore` to:
-- Map the relevant parts of the codebase
-- Identify files, functions, and patterns involved
-- Find existing solutions or similar patterns
-- Assess complexity
+| Tier | Criteria | Agent limit | Critic limit | Model |
+|------|----------|-------------|--------------|-------|
+| **light** | Single file, known pattern, quick fix | 0-1 | 1 | haiku preferred |
+| **standard** | Multi-file, some exploration needed | 2-4 | 2 | sonnet/default |
+| **deep** | Cross-cutting, unknown scope, major feature | 5-8 | 3 | opus for planning |
 
-Alternatively, invoke `/scout` if the exploration follows a known pattern.
+Write the tier to `.claude/memory/budget.md` and set the counters.
 
-**Key decision**: Is this a known pattern (use existing skill) or unknown territory (use agent)?
+**Cost-first rule**: Always start with the lowest tier that might work. Upgrade only if the scout phase reveals higher complexity than expected — and tell the user when upgrading.
+
+## Phase 2: Scout (scaled to tier)
+
+Scale exploration to the assigned tier:
+
+### Light tier:
+- Use Glob/Grep directly — NO agent spawns for scouting
+- Quick check of 1-3 files max
+
+### Standard tier:
+- Use `/scout` skill for structured exploration
+- Or a single `Agent(subagent_type: Explore)` if cross-module
+
+### Deep tier:
+- Use `Agent(subagent_type: Explore)` for thorough mapping
+- May spawn parallel explore agents for independent modules
+
+**After scouting**: Re-evaluate the tier. If scope is smaller than expected, **downgrade**. If larger, propose upgrade to user.
+
+Update `.claude/memory/budget.md` — increment scout counter.
 
 ## Phase 3: Analyze & Plan
 
@@ -98,10 +124,12 @@ Invoke the appropriate `/skill-name` with arguments.
 Launch independent agents in a single message with multiple Agent tool calls.
 
 ### After each subtask:
-1. Update `.claude/memory/state.md` — mark subtask status
-2. Invoke `/critic` mentally (or as agent) — does the output meet quality standards?
-3. If critic finds issues → re-execute or re-plan
-4. Log decisions to `.claude/memory/decisions.md` via scribe pattern
+1. Update `.claude/memory/budget.md` — increment counters for any agents/critics used
+2. Update `.claude/memory/state.md` — mark subtask status
+3. **Budget gate**: Check if any counter hit its limit. If yes → stop and report to user
+4. Invoke `/critic` if tier allows another round. For **light tier**, skip critic on individual subtasks — only run once at the end
+5. If critic returns FAIL → re-execute ONCE. If FAIL again → **circuit breaker** → escalate to user with findings
+6. Log decisions to `.claude/memory/decisions.md` via scribe pattern
 
 ## Phase 5: Integrate & Verify
 
@@ -113,13 +141,15 @@ Once all subtasks are done:
 
 ## Phase 6: Learn & Close
 
-1. Update `.claude/memory/state.md` — mark task complete
-2. Record learnings via scribe pattern to `.claude/memory/learnings.md`:
+1. **Budget report**: Update `.claude/memory/budget.md` — generate summary, move to history, reset counters. Show the user: agents used / limit, critic rounds / limit, overall verdict.
+2. Update `.claude/memory/state.md` — mark task complete
+3. Record learnings via scribe pattern to `.claude/memory/learnings.md`:
    - What patterns emerged? (add to Patterns)
    - What didn't work? (add to Anti-patterns)
    - Was a skill missing? (add to Skill Gaps)
-3. If a new repeatable pattern was discovered → suggest creating a skill via `/skill-generator`
-4. Summarize results to the user
+   - Was the tier accurate? (note if over/under-estimated for future calibration)
+4. If a new repeatable pattern was discovered → suggest creating a skill via `/skill-generator`
+5. Summarize results to the user, **including cost summary**
 
 ## Decision Framework: Agent vs. Skill vs. Direct
 
@@ -136,13 +166,26 @@ Is this a known, repeatable pattern?
     └── NO → Do it directly (simple edit, single command)
 ```
 
+## Circuit Breakers (hard stops)
+
+These CANNOT be overridden without user approval:
+
+1. **Agent loop**: Same agent type spawned 3+ times for same subtask → STOP
+2. **Critic loop**: FAIL verdict 2 times on same target → STOP, show user what's wrong
+3. **Budget exceeded**: Any counter hits tier limit → STOP, ask user to extend or wrap up
+4. **Nesting depth**: orchestrator→skill→agent exceeds 2 levels → STOP, flatten
+5. **Memory bloat**: Any `.claude/memory/` file exceeds 500 lines → trigger scribe maintenance first
+
 ## Rules
 
-1. **Never do the work yourself** — always delegate to agents or skills
-2. **Never skip the scout phase** — even if you think you know the answer
-3. **Always update shared memory** — other skills depend on it
-4. **Prefer skills over agents** when a pattern exists — they're cheaper and faster
-5. **Prefer parallel agents** over sequential when dependencies allow
-6. **Always run the critic** — quality gates are not optional
-7. **Create skills for new patterns** — if you do it twice, it should be a skill
-8. **Ask the user when uncertain** — don't guess on ambiguous requirements
+1. **Budget first** — check `.claude/memory/budget.md` before every agent spawn or critic invocation
+2. **Start light, escalate if needed** — default to lowest viable tier
+3. **Do simple things directly** — for light tier, the orchestrator CAN do work itself (no mandatory delegation for trivial edits)
+4. **Scale scout to tier** — no agent spawns for scouting in light tier
+5. **Always update shared memory** — other skills depend on it
+6. **Prefer skills over agents** — skills are cheaper (no separate context window)
+7. **Prefer parallel agents** over sequential when dependencies allow
+8. **Critic is proportional** — light tier: once at end; standard: after key subtasks; deep: after each subtask
+9. **Create skills for new patterns** — if you do it twice, it should be a skill
+10. **Ask the user when uncertain** — don't guess on ambiguous requirements
+11. **Report cost at close** — always include budget summary in Phase 6

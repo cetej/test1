@@ -84,11 +84,20 @@ If target is "last changes":
 - **medium**: Should fix. Causes problems later. (performance, tech debt)
 - **low**: Nice to fix. Improves quality. (style, readability)
 
+## Cost Awareness
+
+Before reviewing, check `.claude/memory/budget.md`:
+- Increment the critic iteration counter
+- If the counter hits the tier limit → this is the LAST review allowed. Make it count.
+- If this is a re-review after a FAIL → it counts as another iteration. If this is the 2nd FAIL on the same target → **circuit breaker** → return the report and let the orchestrator escalate to user.
+
 ## After Review
 
-1. Update `.claude/memory/state.md` — note review result under active task
-2. If new anti-patterns discovered → note for `.claude/memory/learnings.md`
-3. If verdict is FAIL → the orchestrator must re-plan/re-execute before proceeding
+1. Update `.claude/memory/budget.md` — increment critic counter
+2. Update `.claude/memory/state.md` — note review result under active task
+3. If new anti-patterns discovered → note for `.claude/memory/learnings.md`
+4. If verdict is FAIL → the orchestrator must re-plan/re-execute before proceeding
+5. If 2nd FAIL on same target → escalate to user, do NOT continue looping
 
 ## Rules
 
@@ -98,3 +107,4 @@ If target is "last changes":
 4. **Severity must match reality** — don't cry wolf on low-severity issues
 5. **Check conventions first** — read CLAUDE.md / project config before judging style
 6. **One review, one report** — don't drip-feed issues; collect everything in one pass
+7. **Respect the budget** — if you're the last allowed critic round, focus on high-severity issues only

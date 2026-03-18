@@ -3,7 +3,7 @@ name: skill-generator
 description: Create, update, or improve Claude Code skills. Use when asked to generate a new skill, modify an existing one, or when the user says they want a slash command for something.
 argument-hint: [description of the skill to create]
 user-invocable: true
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
+allowed-tools: Read, Write, Edit, Glob, Grep
 ---
 
 # Skill Generator

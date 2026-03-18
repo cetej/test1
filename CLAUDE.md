@@ -120,6 +120,19 @@ When in doubt, prefer orchestration — the overhead is small but the quality im
 | `/critic` | Reviewer — evaluates quality | After implementation, before finalizing |
 | `/scribe` | Recorder — maintains shared memory | After decisions or task completion |
 | `/skill-generator` | Creator — builds new skills | When a repeatable pattern has no skill yet |
+| `/budget` | Cost controller — tracks and limits resource usage | Before expensive operations, or to check status |
+
+### Cost control
+
+Every orchestrated task is assigned a **complexity tier** (light / standard / deep) that sets hard limits on agent spawns, critic iterations, and scout depth. The budget is tracked in `.claude/memory/budget.md`.
+
+| Tier | Agent spawns | Critic rounds | When |
+|------|-------------|---------------|------|
+| light | 0-1 | 1 | Single file, known pattern |
+| standard | 2-4 | 2 | Multi-file, some exploration |
+| deep | 5-8 | 3 | Cross-cutting, major feature |
+
+**Default to light tier.** Upgrade only when scouting reveals higher complexity. Circuit breakers stop execution if limits are hit — the user decides whether to extend.
 
 ### Shared memory
 

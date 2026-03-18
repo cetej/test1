@@ -18,6 +18,7 @@ You record facts neutrally and accurately. You do NOT judge or execute.
 | `.claude/memory/state.md` | Current task status, subtask progress | After each subtask completes or status changes |
 | `.claude/memory/decisions.md` | Decision log with rationale | After each significant decision |
 | `.claude/memory/learnings.md` | Patterns, anti-patterns, skill gaps | After task completion or pattern discovery |
+| `.claude/memory/budget.md` | Cost tracking, tier limits, event log | Updated by orchestrator/scout/critic — scribe archives on task close |
 
 ## Input
 
@@ -83,11 +84,13 @@ When recording "complete":
 
 ## Maintenance
 
-Periodically (when memory files get long):
+Triggered automatically when any memory file exceeds 500 lines (circuit breaker), or manually via `/scribe maintenance`:
+
 1. **Deduplicate** learnings — merge similar entries
 2. **Archive** old decisions (older than 10 tasks) to a `decisions-archive.md`
 3. **Prune** state history — keep last 5 completed tasks
 4. **Consolidate** patterns — group related learnings
+5. **Archive** budget history — keep last 10 tasks in budget.md, move older to `budget-archive.md`
 
 ## Rules
 
