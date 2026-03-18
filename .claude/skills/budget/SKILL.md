@@ -23,6 +23,7 @@ Parse `$ARGUMENTS`:
 - **"report"** → Generate a cost report for the current/last task
 - **"reset"** → Reset counters for a new task (preserves history)
 - **"estimate [description]"** → Estimate cost tier for a planned operation
+- **"actual"** → Fetch real usage from Claude Code Analytics API (if available)
 - No args → Same as "check"
 
 ## Budget Ledger Format
@@ -112,6 +113,18 @@ Example: After spawning an agent
 4. If limit reached → trigger circuit breaker
 5. Log the event
 ```
+
+## Analytics API Integration
+
+When invoked with "actual", attempt to fetch real usage metrics:
+
+1. Check if Claude Code Analytics API is accessible (requires org-level API key)
+2. If available: fetch daily aggregated usage — token counts, cost data, tool usage stats
+3. Compare estimated budget (from counters) with actual API-reported usage
+4. Report the delta: "Estimated X agents / Y tokens. Actual: Z tokens ($N.NN)"
+5. If not available: report "Analytics API not configured. Using estimate-only mode."
+
+This is optional — the budget system works without it. Analytics provides calibration data to improve future estimates.
 
 ## After Task Completion
 

@@ -48,11 +48,8 @@ Accumulated knowledge from all tasks. Used by all skills/agents to improve over 
 
 ## Skill Gaps
 
-### Dependency Upgrade Planner
-- **Situation**: /watch revealed Python 3.8.10, timm 0.6.12, PyTorch 2.1.2 are critically outdated
-- **What was needed**: A skill that analyzes current dependencies, checks latest versions, identifies breaking changes, and produces an upgrade plan
-- **Workaround used**: Manual review of /watch findings
-- **Priority**: medium
+### ~~Dependency Upgrade Planner~~ RESOLVED
+- Created `/dependency-audit` skill (2026-03-18)
 
 ### Agent Teams Integration
 - **Situation**: Claude Code now supports native Agent Teams (since Feb 2026)

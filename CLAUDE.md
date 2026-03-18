@@ -122,6 +122,16 @@ When in doubt, prefer orchestration — the overhead is small but the quality im
 | `/skill-generator` | Creator — builds new skills | When a repeatable pattern has no skill yet |
 | `/budget` | Cost controller — tracks and limits resource usage | Before expensive operations, or to check status |
 | `/watch` | News scanner — tracks updates in AI/ML ecosystem | Weekly, or when asking "what's new" |
+| `/checkpoint` | Session continuity — saves/resumes progress across sessions | When ending session, context is large, or "save progress" |
+| `/dependency-audit` | Version checker — audits deps for updates and breaking changes | After /watch reports version gaps, or before upgrades |
+
+### Session continuity
+
+At the **start of every session**, read `.claude/memory/checkpoint.md`. If it exists and has content, show the user the checkpoint summary and offer to resume. This ensures no work is lost across session boundaries.
+
+Use `/checkpoint save` before ending a session or when context is getting large. The checkpoint includes a **resume prompt** — a self-contained instruction the user can paste into a new session to continue exactly where they left off.
+
+The `/orchestrate` skill auto-checkpoints when it detects high context usage (>70% subtasks done, 3+ agents spawned). You can also run `/checkpoint save` manually at any time.
 
 ### Cost control
 
@@ -138,6 +148,12 @@ Every orchestrated task is assigned a **complexity tier** (light / standard / de
 ### Shared memory
 
 Always check `.claude/memory/learnings.md` before starting work — it contains accumulated patterns and anti-patterns from previous tasks. After completing work, record learnings and decisions via `/scribe`.
+
+### Recommended hooks
+
+If available in your Claude Code version, configure these hooks in settings.json:
+- **TaskCompleted** → Reminder to run `/scribe complete` and `/checkpoint save`
+- **SessionStart** → Auto-read checkpoint.md for session resumption
 
 ## Code Conventions
 

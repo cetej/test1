@@ -20,12 +20,22 @@ Before anything, read the shared memory:
 
 Apply any relevant learnings to the current task.
 
-## Phase 0: Budget Check
+## Phase 0: Budget & Checkpoint Check
 
 Before anything else:
+
+### Budget check:
 1. Read `.claude/memory/budget.md`
 2. If a previous task is still active and over budget → alert the user before starting new work
 3. Read `.claude/memory/news.md` — if last scan is older than 7 days, suggest running `/watch` before starting work
+
+### Checkpoint check:
+4. Read `.claude/memory/checkpoint.md` (if it exists)
+5. If a checkpoint exists with content:
+   - Show the user: "Found checkpoint from **<date>**: *<task summary>* (<progress>)"
+   - Ask: "Resume this task, or start fresh?"
+   - If **resume**: load context from checkpoint, skip Phase 1-3 as applicable (the checkpoint has the task state, subtasks, and next action). Jump to Phase 4 at the right subtask.
+   - If **fresh**: archive checkpoint summary to `.claude/memory/state.md` history, clear checkpoint.md, proceed normally
 
 ## Phase 1: Understand & Classify
 
@@ -124,6 +134,13 @@ Invoke the appropriate `/skill-name` with arguments.
 ### Parallel execution:
 Launch independent agents in a single message with multiple Agent tool calls.
 
+### Agent Teams (if available):
+If 2+ independent subtasks have no data dependencies AND tier is standard or deep:
+- Consider using Agent Teams for native parallel coordination
+- Each team member gets its own context, works independently, results are collected
+- This is more efficient than sequential Agent() calls for truly independent work
+- Fall back to sequential Agent() if Agent Teams is not available in the current environment
+
 ### After each subtask:
 1. Update `.claude/memory/budget.md` — increment counters for any agents/critics used
 2. Update `.claude/memory/state.md` — mark subtask status
@@ -131,6 +148,19 @@ Launch independent agents in a single message with multiple Agent tool calls.
 4. Invoke `/critic` if tier allows another round. For **light tier**, skip critic on individual subtasks — only run once at the end
 5. If critic returns FAIL → re-execute ONCE. If FAIL again → **circuit breaker** → escalate to user with findings
 6. Log decisions to `.claude/memory/decisions.md` via scribe pattern
+
+### Context health check (after each subtask):
+
+Evaluate whether the session context is getting large using these signals:
+- **Subtask progress >70%**: most work is behind us, context is heavy
+- **Agent spawns ≥3**: each agent result added significant context
+- **Long exchange history**: many back-and-forth exchanges with user
+
+If **2 or more signals** are true:
+1. Auto-invoke `/checkpoint save` (silently — don't interrupt user flow)
+2. Notify user once: "Context is getting large. Checkpoint saved. If you notice quality degradation, start a new session with the resume prompt from `/checkpoint status`."
+3. Continue working — do NOT stop unless user requests it
+4. Only trigger this notification **once per session** (set a mental flag after first trigger)
 
 ## Phase 5: Integrate & Verify
 
