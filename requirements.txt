@@ -1,9 +1,9 @@
 wheel
 torch==2.5.1
 torchvision==0.20.1
-transformers==4.39.3
+transformers==4.44.2
 accelerate>=1.0.0
-diffusers>=0.30.1
+diffusers==0.35.2
 numpy==1.24.4
 einops
 ftfy
@@ -21,7 +21,7 @@ scikit-image
 sentencepiece
 spacy==3.7.5
 streamlit
-timm==0.6.12
+timm==0.9.12
 tqdm
 torchmetrics
 tiktoken
