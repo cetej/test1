@@ -10,10 +10,29 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
 
 You are a meta-skill that creates, updates, and improves other Claude Code skills.
 
+## System Integration
+
+This skill is part of the orchestration system. Related skills:
+- `/orchestrate` — conductor that decomposes tasks and delegates
+- `/scout` — explores codebase before changes
+- `/critic` — reviews quality of outputs
+- `/scribe` — records decisions and learnings to shared memory
+
+Shared memory lives in `.claude/memory/`:
+- `state.md` — current task state
+- `decisions.md` — decision log
+- `learnings.md` — patterns, anti-patterns, skill gaps
+
+When creating new skills, ensure they integrate with this system:
+- Skills should read `.claude/memory/learnings.md` for context
+- Skills should update shared memory via scribe patterns after completing work
+- Skills that modify state should log decisions
+
 ## Before Starting
 
 1. Check your memory for learned patterns and past generations:
    - Read `.claude/skills/skill-generator/LEARNINGS.md` if it exists
+   - Read `.claude/memory/learnings.md` — check Skill Gaps section for requested skills
    - Apply any lessons learned from previous skill creation sessions
 
 2. If updating an existing skill, read its current `SKILL.md` first.
@@ -133,6 +152,10 @@ Update learnings for future improvements:
    - What worked well / what to improve next time
    ```
 3. Write the updated file
+4. Update `.claude/memory/learnings.md`:
+   - Remove the skill gap entry if this skill was created to fill one
+   - Add any new patterns discovered during creation
+5. Log the decision to `.claude/memory/decisions.md` via scribe pattern
 
 ## Anti-patterns to Avoid
 
