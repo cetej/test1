@@ -46,6 +46,17 @@ Accumulated knowledge from all tasks. Used by all skills/agents to improve over 
 - **Example**: /watch source tier selection — presented 3 options with token counts, USD, CZK estimates
 - **Source**: /watch creation task, 2026-03-18
 
+## Cross-Repo Setup
+
+### User's Desktop Environment
+- **Context**: User (cetej) works on desktop with repo `ng-robot` (https://github.com/cetej/NG-ROBOT)
+- **Key fact**: `test1` repo exists ONLY on Claude Code web — it does NOT exist on user's desktop
+- **Orchestration sync**: `.claude/skills/` and `.claude/memory/` are developed here in test1, then synced to ng-robot via `scripts/sync-orchestration.sh` or manual `git checkout` from test1 remote
+- **CLAUDE.md**: Each repo has its own project-specific CLAUDE.md — do NOT sync between repos
+- **Sync workflow**: User added test1 as remote in ng-robot (`git remote add test1 https://github.com/cetej/test1.git`), then cherry-picks files from test1 branches
+- **Common confusion**: User may say "I did git pull but nothing changed" — likely pulled in ng-robot while changes are in test1. Always clarify which repo.
+- **Source**: Session 2026-03-18
+
 ## Skill Gaps
 
 ### ~~Dependency Upgrade Planner~~ RESOLVED
