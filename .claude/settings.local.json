@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "TaskCompleted": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Task done. Consider: /scribe complete, /checkpoint save'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f .claude/memory/checkpoint.md ] && [ -s .claude/memory/checkpoint.md ]; then echo 'Checkpoint found:'; head -10 .claude/memory/checkpoint.md; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

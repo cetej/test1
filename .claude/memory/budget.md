@@ -2,16 +2,18 @@
 
 ## Current Task
 
-_No active task._
+**Task**: Execute implementation plan (news action items)
+**Tier**: deep (upgraded from standard — 10 subtasks across 3 phases)
+**Started**: 2026-03-18
 
 ### Counters
 
 | Metric | Used | Limit | Status |
 |--------|------|-------|--------|
-| Agent spawns | 0 | — | — |
-| Critic iterations | 0 | — | — |
-| Scout depth | 0 | — | — |
-| Skill creations | 0 | — | — |
+| Agent spawns | 7 | 8 | OK |
+| Critic iterations | 0 | 2 | OK |
+| Scout depth | 0 | 1 | OK |
+| Skill creations | 0 | 2 | OK |
 
 ### Event Log
 
