@@ -48,4 +48,14 @@ Accumulated knowledge from all tasks. Used by all skills/agents to improve over 
 
 ## Skill Gaps
 
-<!-- Tasks where no suitable skill existed — candidates for /skill-generator -->
+### Dependency Upgrade Planner
+- **Situation**: /watch revealed Python 3.8.10, timm 0.6.12, PyTorch 2.1.2 are critically outdated
+- **What was needed**: A skill that analyzes current dependencies, checks latest versions, identifies breaking changes, and produces an upgrade plan
+- **Workaround used**: Manual review of /watch findings
+- **Priority**: medium
+
+### Agent Teams Integration
+- **Situation**: Claude Code now supports native Agent Teams (since Feb 2026)
+- **What was needed**: /orchestrate Phase 4 could use Agent Teams for parallel subtask execution instead of manual Agent() spawning
+- **Workaround used**: Current system uses individual Agent() calls
+- **Priority**: medium
