@@ -151,7 +151,7 @@ class PyramidDiTForVideoGeneration:
         self._enable_sequential_cpu_offload(self.dit)
 
     def load_checkpoint(self, checkpoint_path, model_key='model', **kwargs):
-        checkpoint = torch.load(checkpoint_path, map_location='cpu')
+        checkpoint = torch.load(checkpoint_path, map_location='cpu', weights_only=False)
         dit_checkpoint = OrderedDict()
         for key in checkpoint:
             if key.startswith('vae') or key.startswith('text_encoder'):
@@ -167,7 +167,7 @@ class PyramidDiTForVideoGeneration:
         print(f"Load checkpoint from {checkpoint_path}, load result: {load_result}")
 
     def load_vae_checkpoint(self, vae_checkpoint_path, model_key='model'):
-        checkpoint = torch.load(vae_checkpoint_path, map_location='cpu')
+        checkpoint = torch.load(vae_checkpoint_path, map_location='cpu', weights_only=False)
         checkpoint = checkpoint[model_key]
         loaded_checkpoint = OrderedDict()
         

@@ -75,7 +75,7 @@ def main():
     try:
         if args.task == 't2v':
             prompt = args.prompt
-            with torch.no_grad(), torch.cuda.amp.autocast(enabled=(model_dtype != 'fp32'), dtype=torch_dtype):
+            with torch.no_grad(), torch.amp.autocast("cuda",enabled=(model_dtype != 'fp32'), dtype=torch_dtype):
                 frames = model.generate(
                     prompt=prompt,
                     num_inference_steps=[20, 20, 20],
@@ -101,7 +101,7 @@ def main():
 
             prompt = args.prompt
 
-            with torch.no_grad(), torch.cuda.amp.autocast(enabled=(model_dtype != 'fp32'), dtype=torch_dtype):
+            with torch.no_grad(), torch.amp.autocast("cuda",enabled=(model_dtype != 'fp32'), dtype=torch_dtype):
                 frames = model.generate_i2v(
                     prompt=prompt,
                     input_image=image,

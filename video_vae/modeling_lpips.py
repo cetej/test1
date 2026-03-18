@@ -24,7 +24,7 @@ class LPIPS(nn.Module):
 
     def load_from_pretrained(self):
         ckpt = "/home/jinyang/models/vae/video_vae_baseline/vgg_lpips.pth"    # replace with your lpips
-        self.load_state_dict(torch.load(ckpt, map_location=torch.device("cpu")), strict=True)
+        self.load_state_dict(torch.load(ckpt, map_location=torch.device("cpu"), weights_only=False), strict=True)
         print("loaded pretrained LPIPS loss from {}".format(ckpt))
 
     def forward(self, input, target):

@@ -7,7 +7,7 @@
 - **Paper**: https://arxiv.org/abs/2410.05954
 - **Model**: https://huggingface.co/rain1011/pyramid-flow-sd3
 - **Language**: Python 3.10.14
-- **Framework**: PyTorch 2.1.2
+- **Framework**: PyTorch 2.5.1
 
 ## Repository Structure
 
@@ -167,9 +167,9 @@ If available in your Claude Code version, configure these hooks in settings.json
 
 ## Dependencies (Key)
 
-- `torch==2.1.2`, `torchvision==0.16.2`
+- `torch==2.5.1`, `torchvision==0.20.1`
 - `transformers==4.39.3` (Hugging Face)
 - `diffusers>=0.30.1` (for `export_to_video` and scheduler base classes)
-- `accelerate==0.30.0` (for device management and offloading)
+- `accelerate>=1.0.0` (for device management and offloading)
 - `einops`, `timm==0.6.12` (tensor operations and vision models)
 - `gradio` (web UI, installed separately)
