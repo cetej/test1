@@ -6,7 +6,7 @@
 
 - **Paper**: https://arxiv.org/abs/2410.05954
 - **Model**: https://huggingface.co/rain1011/pyramid-flow-sd3
-- **Language**: Python 3.8.10
+- **Language**: Python 3.10.14
 - **Framework**: PyTorch 2.1.2
 
 ## Repository Structure
@@ -55,7 +55,7 @@
 ## Setup
 
 ```bash
-conda create -n pyramid python==3.8.10
+conda create -n pyramid python==3.10.14
 conda activate pyramid
 pip install -r requirements.txt
 ```
