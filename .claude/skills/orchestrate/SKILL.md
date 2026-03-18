@@ -25,6 +25,7 @@ Apply any relevant learnings to the current task.
 Before anything else:
 1. Read `.claude/memory/budget.md`
 2. If a previous task is still active and over budget → alert the user before starting new work
+3. Read `.claude/memory/news.md` — if last scan is older than 7 days, suggest running `/watch` before starting work
 
 ## Phase 1: Understand & Classify
 

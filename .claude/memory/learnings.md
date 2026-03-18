@@ -40,6 +40,12 @@ Accumulated knowledge from all tasks. Used by all skills/agents to improve over 
 - **Instead**: Tier-based limits. Light=0-1, Standard=2-4, Deep=5-8. Never exceed without user approval.
 - **Source**: Self-assessment task, 2026-03-18
 
+### Cost Estimation for User Decisions
+- **Context**: When proposing options with different cost profiles to the user
+- **Pattern**: Always estimate cost in tokens AND real currency (USD + local). Users can't judge "50k tokens" but understand "$0.15/week". Present as comparison table with previews.
+- **Example**: /watch source tier selection — presented 3 options with token counts, USD, CZK estimates
+- **Source**: /watch creation task, 2026-03-18
+
 ## Skill Gaps
 
 <!-- Tasks where no suitable skill existed — candidates for /skill-generator -->

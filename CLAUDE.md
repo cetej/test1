@@ -121,6 +121,7 @@ When in doubt, prefer orchestration — the overhead is small but the quality im
 | `/scribe` | Recorder — maintains shared memory | After decisions or task completion |
 | `/skill-generator` | Creator — builds new skills | When a repeatable pattern has no skill yet |
 | `/budget` | Cost controller — tracks and limits resource usage | Before expensive operations, or to check status |
+| `/watch` | News scanner — tracks updates in AI/ML ecosystem | Weekly, or when asking "what's new" |
 
 ### Cost control
 

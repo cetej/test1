@@ -21,3 +21,10 @@ Decisions made during task execution. Each entry captures WHAT was decided, WHY,
 - **Decision**: Restricted to Read, Write, Edit, Glob, Grep
 - **Rationale**: skill-generator creates files and reads existing ones. It never needs to run shell commands or spawn subagents.
 - **Decided by**: orchestrator (self-assessment)
+
+### 2026-03-18 — Add /watch Skill for Automated News Monitoring
+- **Context**: User requested automatic tracking of news/updates to prevent the project from falling behind on tools and dependencies.
+- **Options considered**: (A) Claude Code + API only (~$0.02/week), (B) + AI/ML ecosystem (~$0.05/week), (C) + community sources (~$0.15/week)
+- **Decision**: Option C — full coverage including community, weekly cadence
+- **Rationale**: At ~$0.15/week (~182 CZK/year) the cost is negligible. Community sources have lower signal-to-noise but the skill filters aggressively and skips consistently empty sources. Weekly frequency balances freshness vs. cost.
+- **Decided by**: user (chose full coverage after seeing cost estimates)
