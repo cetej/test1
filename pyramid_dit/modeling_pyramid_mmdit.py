@@ -157,7 +157,8 @@ class PyramidDiffusionMMDiT(ModelMixin, ConfigMixin):
                 block_size=attn_res_block_size,
             )
             print(f"Using Block Attention Residuals (block_size={attn_res_block_size}, "
-                  f"num_blocks={self.attn_res.num_blocks})")
+                  f"layers_per_block={self.attn_res.layers_per_block}, "
+                  f"num_boundaries={self.attn_res.num_boundaries})")
 
         if self.use_temporal_causal:
             print("Using temporal causal attention")
@@ -470,9 +471,10 @@ class PyramidDiffusionMMDiT(ModelMixin, ConfigMixin):
         # Initialize Block AttnRes state if enabled
         if self.use_attention_residuals:
             attn_res_block_outputs = []
-            attn_res_partial = torch.zeros_like(hidden_states)
-            attn_res_block_step = 0
-            attn_res_step = 0
+            attn_res_layers_in_block = 0
+            attn_res_boundary_idx = 0
+            layers_per_block = self.attn_res.layers_per_block
+            num_blocks = len(self.transformer_blocks)
 
         for i_b, block in enumerate(self.transformer_blocks):
             if self.training and self.gradient_checkpointing and (i_b >= 2):
@@ -484,84 +486,40 @@ class PyramidDiffusionMMDiT(ModelMixin, ConfigMixin):
 
                 ckpt_kwargs: Dict[str, Any] = {"use_reentrant": False} if is_torch_version(">=", "1.11.0") else {}
 
-                if self.use_attention_residuals:
-                    block_result = torch.utils.checkpoint.checkpoint(
-                        create_custom_forward(block),
-                        hidden_states,
-                        encoder_hidden_states,
-                        encoder_attention_mask,
-                        temb,
-                        attention_mask,
-                        hidden_length,
-                        image_rotary_emb,
-                        True,  # use_attn_res=True
-                        **ckpt_kwargs,
-                    )
-                    encoder_hidden_states = block_result[0]
-                    hidden_states = block_result[1]
-                    h_attn_out, h_ff_out = block_result[2], block_result[3]
-
-                    # AttnRes step for attention sublayer
-                    hidden_states, attn_res_block_outputs, attn_res_partial, attn_res_block_step = \
-                        self.attn_res(hidden_states, h_attn_out, attn_res_step,
-                                      attn_res_block_outputs, attn_res_partial, attn_res_block_step)
-                    attn_res_step += 1
-
-                    # AttnRes step for MLP sublayer
-                    hidden_states, attn_res_block_outputs, attn_res_partial, attn_res_block_step = \
-                        self.attn_res(hidden_states, h_ff_out, attn_res_step,
-                                      attn_res_block_outputs, attn_res_partial, attn_res_block_step)
-                    attn_res_step += 1
-                else:
-                    encoder_hidden_states, hidden_states = torch.utils.checkpoint.checkpoint(
-                        create_custom_forward(block),
-                        hidden_states,
-                        encoder_hidden_states,
-                        encoder_attention_mask,
-                        temb,
-                        attention_mask,
-                        hidden_length,
-                        image_rotary_emb,
-                        **ckpt_kwargs,
-                    )
+                encoder_hidden_states, hidden_states = torch.utils.checkpoint.checkpoint(
+                    create_custom_forward(block),
+                    hidden_states,
+                    encoder_hidden_states,
+                    encoder_attention_mask,
+                    temb,
+                    attention_mask,
+                    hidden_length,
+                    image_rotary_emb,
+                    **ckpt_kwargs,
+                )
 
             else:
-                if self.use_attention_residuals:
-                    block_result = block(
-                        hidden_states=hidden_states,
-                        encoder_hidden_states=encoder_hidden_states,
-                        encoder_attention_mask=encoder_attention_mask,
-                        temb=temb,
-                        attention_mask=attention_mask,
-                        hidden_length=hidden_length,
-                        image_rotary_emb=image_rotary_emb,
-                        use_attn_res=True,
-                    )
-                    encoder_hidden_states = block_result[0]
-                    hidden_states = block_result[1]
-                    h_attn_out, h_ff_out = block_result[2], block_result[3]
+                encoder_hidden_states, hidden_states = block(
+                    hidden_states=hidden_states,
+                    encoder_hidden_states=encoder_hidden_states,
+                    encoder_attention_mask=encoder_attention_mask,
+                    temb=temb,
+                    attention_mask=attention_mask,
+                    hidden_length=hidden_length,
+                    image_rotary_emb=image_rotary_emb,
+                )
 
-                    # AttnRes step for attention sublayer
-                    hidden_states, attn_res_block_outputs, attn_res_partial, attn_res_block_step = \
-                        self.attn_res(hidden_states, h_attn_out, attn_res_step,
-                                      attn_res_block_outputs, attn_res_partial, attn_res_block_step)
-                    attn_res_step += 1
-
-                    # AttnRes step for MLP sublayer
-                    hidden_states, attn_res_block_outputs, attn_res_partial, attn_res_block_step = \
-                        self.attn_res(hidden_states, h_ff_out, attn_res_step,
-                                      attn_res_block_outputs, attn_res_partial, attn_res_block_step)
-                    attn_res_step += 1
-                else:
-                    encoder_hidden_states, hidden_states = block(
-                        hidden_states=hidden_states,
-                        encoder_hidden_states=encoder_hidden_states,
-                        encoder_attention_mask=encoder_attention_mask,
-                        temb=temb,
-                        attention_mask=attention_mask,
-                        hidden_length=hidden_length,
-                        image_rotary_emb=image_rotary_emb,
+            # Block AttnRes: aggregate at block boundaries
+            if self.use_attention_residuals:
+                attn_res_layers_in_block += 1
+                is_boundary = (attn_res_layers_in_block >= layers_per_block) or (i_b == num_blocks - 1)
+                if is_boundary:
+                    attn_res_block_outputs.append(hidden_states)
+                    hidden_states = self.attn_res.depth_attention(
+                        attn_res_block_outputs, attn_res_boundary_idx
                     )
+                    attn_res_boundary_idx += 1
+                    attn_res_layers_in_block = 0
 
         hidden_states = self.norm_out(hidden_states, temb, hidden_length=hidden_length)
         hidden_states = self.proj_out(hidden_states)

@@ -45,15 +45,14 @@ attn_res_mod = _load_module(
 )
 
 BlockAttentionResidual = attn_res_mod.BlockAttentionResidual
-BlockAttentionResidualDualStream = attn_res_mod.BlockAttentionResidualDualStream
 
 
 class TestBlockAttentionResidual:
 
     def setup_method(self):
         self.dim = 64
-        self.num_layers = 6
-        self.block_size = 4
+        self.num_layers = 12
+        self.block_size = 8  # 4 layers per block
         self.batch_size = 2
         self.seq_len = 16
 
@@ -64,9 +63,9 @@ class TestBlockAttentionResidual:
 
     def test_init_shapes(self):
         module = self._make_module()
-        total_steps = self.num_layers * 2
-        assert len(module.query_projs) == total_steps
-        assert module.num_blocks == 3  # 12 / 4
+        assert module.layers_per_block == 4
+        assert module.num_boundaries == 3  # 12 layers / 4 per block
+        assert len(module.query_projs) == 3
 
     def test_zero_init(self):
         module = self._make_module()
@@ -74,129 +73,102 @@ class TestBlockAttentionResidual:
             assert torch.all(proj.weight == 0)
 
     def test_uniform_attention_at_init(self):
+        """With zero-init weights, depth attention should produce equal-weight average."""
         module = self._make_module()
         b1 = torch.randn(self.batch_size, self.seq_len, self.dim)
         b2 = torch.randn(self.batch_size, self.seq_len, self.dim)
-        result = module._depth_attention([b1, b2], step_idx=0)
+        result = module.depth_attention([b1, b2], boundary_idx=0)
         expected = (b1 + b2) / 2.0
         torch.testing.assert_close(result, expected, atol=1e-5, rtol=1e-5)
 
     def test_single_block_passthrough(self):
+        """With only one block, depth_attention should return it unchanged."""
         module = self._make_module()
         b = torch.randn(self.batch_size, self.seq_len, self.dim)
-        result = module._depth_attention([b], step_idx=0)
+        result = module.depth_attention([b], boundary_idx=0)
         torch.testing.assert_close(result, b)
 
-    def test_block_boundary_tracking(self):
-        module = self._make_module(block_size=4)
-        hidden = torch.randn(self.batch_size, self.seq_len, self.dim)
-        block_outputs = []
-        partial = torch.zeros_like(hidden)
-        step_count = 0
-
-        for step in range(4):
-            out = torch.randn_like(hidden)
-            hidden, block_outputs, partial, step_count = module(
-                hidden, out, step, block_outputs, partial, step_count
-            )
-
-        assert len(block_outputs) == 1
-        assert step_count == 0
-
-    def test_full_forward(self):
+    def test_three_blocks_attention(self):
+        """With 3 blocks at init, should produce equal-weight average."""
         module = self._make_module()
-        hidden = torch.randn(self.batch_size, self.seq_len, self.dim)
-        block_outputs = []
-        partial = torch.zeros_like(hidden)
-        step_count = 0
-        total = self.num_layers * 2
+        blocks = [torch.randn(self.batch_size, self.seq_len, self.dim) for _ in range(3)]
+        result = module.depth_attention(blocks, boundary_idx=0)
+        expected = sum(blocks) / 3.0
+        torch.testing.assert_close(result, expected, atol=1e-5, rtol=1e-5)
 
-        for step in range(total):
-            out = torch.randn_like(hidden)
-            hidden, block_outputs, partial, step_count = module(
-                hidden, out, step, block_outputs, partial, step_count
-            )
+    def test_boundary_simulation(self):
+        """Simulate the orchestrator loop: run layers, aggregate at boundaries."""
+        module = self._make_module()  # 12 layers, 4 per block
+        hidden = torch.randn(self.batch_size, self.seq_len, self.dim)
+
+        block_outputs = []
+        layers_in_block = 0
+        boundary_idx = 0
+
+        for i_layer in range(self.num_layers):
+            # Simulate a transformer layer (just add noise)
+            hidden = hidden + torch.randn_like(hidden) * 0.1
+            layers_in_block += 1
+
+            is_boundary = (layers_in_block >= module.layers_per_block) or (i_layer == self.num_layers - 1)
+            if is_boundary:
+                block_outputs.append(hidden)
+                hidden = module.depth_attention(block_outputs, boundary_idx)
+                boundary_idx += 1
+                layers_in_block = 0
 
         assert hidden.shape == (self.batch_size, self.seq_len, self.dim)
-        assert len(block_outputs) == module.num_blocks
+        assert len(block_outputs) == 3
+        assert boundary_idx == 3
 
     def test_gradient_flow(self):
+        """Gradients should flow through depth attention back to input."""
         module = self._make_module()
         hidden = torch.randn(self.batch_size, self.seq_len, self.dim, requires_grad=True)
-        block_outputs = []
-        partial = torch.zeros_like(hidden)
-        step_count = 0
-        total = self.num_layers * 2
 
+        block_outputs = []
+        layers_in_block = 0
+        boundary_idx = 0
         current = hidden
-        for step in range(total):
-            sublayer_out = current * 0.1
-            current, block_outputs, partial, step_count = module(
-                current, sublayer_out, step, block_outputs, partial, step_count
-            )
+
+        for i_layer in range(self.num_layers):
+            current = current + current * 0.1  # differentiable "layer"
+            layers_in_block += 1
+
+            is_boundary = (layers_in_block >= module.layers_per_block) or (i_layer == self.num_layers - 1)
+            if is_boundary:
+                block_outputs.append(current)
+                current = module.depth_attention(block_outputs, boundary_idx)
+                boundary_idx += 1
+                layers_in_block = 0
 
         current.sum().backward()
         assert hidden.grad is not None
         assert not torch.all(hidden.grad == 0)
 
     def test_different_block_sizes(self):
+        """Module should work with various block sizes."""
         for bs in [2, 4, 6, 8, 12]:
             module = self._make_module(block_size=bs)
-            hidden = torch.randn(self.batch_size, self.seq_len, self.dim)
-            block_outputs = []
-            partial = torch.zeros_like(hidden)
-            step_count = 0
+            layers_per_block = bs // 2
+            expected_boundaries = (self.num_layers + layers_per_block - 1) // layers_per_block
+            assert module.num_boundaries == expected_boundaries
+            assert len(module.query_projs) == expected_boundaries
 
-            for step in range(self.num_layers * 2):
-                out = torch.randn_like(hidden)
-                hidden, block_outputs, partial, step_count = module(
-                    hidden, out, step, block_outputs, partial, step_count
-                )
-
-            assert hidden.shape == (self.batch_size, self.seq_len, self.dim)
-
-    def test_three_blocks_attention(self):
-        """With 3 completed blocks at init, attention should produce equal-weight average."""
+    def test_different_boundary_indices_use_different_projs(self):
+        """Each boundary should use its own projection."""
         module = self._make_module()
-        blocks = [torch.randn(self.batch_size, self.seq_len, self.dim) for _ in range(3)]
-        result = module._depth_attention(blocks, step_idx=0)
-        expected = sum(blocks) / 3.0
-        torch.testing.assert_close(result, expected, atol=1e-5, rtol=1e-5)
+        # Set different weight vectors for each proj so they produce different logits
+        torch.manual_seed(42)
+        for i, proj in enumerate(module.query_projs):
+            proj.weight.data = torch.randn_like(proj.weight) * (i + 1)
 
+        blocks = [torch.randn(1, 4, self.dim), torch.randn(1, 4, self.dim)]
 
-class TestDualStream:
-
-    def setup_method(self):
-        self.dim = 64
-        self.num_layers = 4
-        self.block_size = 4
-        self.bs = 2
-        self.seq = 16
-        self.enc = 8
-
-    def test_init_state(self):
-        module = BlockAttentionResidualDualStream(
-            dim=self.dim, num_layers=self.num_layers, block_size=self.block_size
-        )
-        h = torch.randn(self.bs, self.seq, self.dim)
-        e = torch.randn(self.bs, self.enc, self.dim)
-        state = module.init_state(h, e)
-        assert state['step_idx'] == 0
-
-    def test_step(self):
-        module = BlockAttentionResidualDualStream(
-            dim=self.dim, num_layers=self.num_layers, block_size=self.block_size
-        )
-        h = torch.randn(self.bs, self.seq, self.dim)
-        e = torch.randn(self.bs, self.enc, self.dim)
-        state = module.init_state(h, e)
-
-        sh = torch.randn_like(h)
-        se = torch.randn_like(e)
-        new_h, new_e = module.step(state, h, sh, e, se)
-        assert state['step_idx'] == 1
-        assert new_h.shape == h.shape
-        assert new_e.shape == e.shape
+        r0 = module.depth_attention(blocks, boundary_idx=0)
+        r1 = module.depth_attention(blocks, boundary_idx=1)
+        # Different projections -> different attention weights -> different results
+        assert not torch.allclose(r0, r1)
 
 
 if __name__ == '__main__':
