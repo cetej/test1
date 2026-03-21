@@ -107,7 +107,7 @@ Then, you can try text-to-video generation on your own prompts:
 ```python
 prompt = "A movie trailer featuring the adventures of the 30 year old space man wearing a red wool knitted motorcycle helmet, blue sky, salt desert, cinematic style, shot on 35mm film, vivid colors"
 
-with torch.no_grad(), torch.cuda.amp.autocast(enabled=True, dtype=torch_dtype):
+with torch.no_grad(), torch.amp.autocast("cuda",enabled=True, dtype=torch_dtype):
     frames = model.generate(
         prompt=prompt,
         num_inference_steps=[20, 20, 20],
@@ -130,7 +130,7 @@ As an autoregressive model, our model also supports (text conditioned) image-to-
 image = Image.open('assets/the_great_wall.jpg').convert("RGB").resize((1280, 768))
 prompt = "FPV flying over the Great Wall"
 
-with torch.no_grad(), torch.cuda.amp.autocast(enabled=True, dtype=torch_dtype):
+with torch.no_grad(), torch.amp.autocast("cuda",enabled=True, dtype=torch_dtype):
     frames = model.generate_i2v(
         prompt=prompt,
         input_image=image,

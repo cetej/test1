@@ -71,7 +71,7 @@ def main():
     if args.task == 't2v':
         prompt = "A movie trailer featuring the adventures of the 30 year old space man wearing a red wool knitted motorcycle helmet, blue sky, salt desert, cinematic style, shot on 35mm film, vivid colors"
 
-        with torch.no_grad(), torch.cuda.amp.autocast(enabled=True if model_dtype != 'fp32' else False, dtype=torch_dtype):
+        with torch.no_grad(), torch.amp.autocast("cuda",enabled=True if model_dtype != 'fp32' else False, dtype=torch_dtype):
             frames = model.generate(
                 prompt=prompt,
                 num_inference_steps=[20, 20, 20],
@@ -98,7 +98,7 @@ def main():
 
         prompt = "FPV flying over the Great Wall"
 
-        with torch.no_grad(), torch.cuda.amp.autocast(enabled=True if model_dtype != 'fp32' else False, dtype=torch_dtype):
+        with torch.no_grad(), torch.amp.autocast("cuda",enabled=True if model_dtype != 'fp32' else False, dtype=torch_dtype):
             frames = model.generate_i2v(
                 prompt=prompt,
                 input_image=image,
