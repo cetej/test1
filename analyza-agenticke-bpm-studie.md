@@ -103,10 +103,21 @@ Studie identifikuje čtyři klíčové schopnosti, které APM agenti musí podpo
 
 Studie zavádí **základní abstrakce a architektonické elementy** potřebné pro realizaci APM systémů:
 
-- **Process Frame** — explicitní rámec definující omezení a cíle procesu
+- **Process Frame (procesní rámec)** — sada pravidel, omezení a regulací, která se může v čase vyvíjet. Na jednom extrému agent dostává velmi specifický cíl s detailní sadou striktních omezení (ekvivalent imperativního procesu), na druhém jsou dány pouze cíle a agent má úplnou volnost.
+- **APM systém** — agentní socio-technický systém, společně realizovaný kolekcí agentů, z nichž někteří jsou alespoň částečně procesně uvědomělí.
 - **Agent-oriented abstraction** — agenti (lidští i softwaroví) jako primární funkční entity
-- **Process awareness** — schopnost agentů být si vědomi procesního kontextu
+- **Process awareness** — zaručení, že vnitřní fungování agentů je v souladu s organizačními procesy a dodržuje operační omezení, regulace a cíle
 - **Guardrails** — mechanismy omezující autonomii agentů
+
+### Architektura A-BPMS (5 vrstev)
+
+Doplňkový článek (arXiv:2601.18833) navrhuje podrobnou architekturu **Agentic BPMS** s pěti podsystémy:
+
+1. **Datová vrstva (Data Layer)** — integruje strukturovaná i nestrukturovaná data o podnikových operacích, včetně eventových logů, repozitářů procesních modelů a záznamů minulých rozhodnutí
+2. **Vrstva procesní inteligence (Process Intelligence Layer)** — analytická vrstva pro dolování a monitoring procesů
+3. **Vrstva akcí (Action Layer)** — provádění akcí v prostředí
+4. **Orchestrační vrstva (Orchestration Layer)** — koordinace více agentů a procesů
+5. **Konverzační vrstva (Conversational Layer)** — interakce mezi uživateli a A-BPMS prostřednictvím konverzačních agentů poháněných generativní AI (např. LLM)
 
 ---
 
@@ -128,14 +139,21 @@ Studie navrhuje využití existujících metod analýzy a návrhu agentových sy
 
 ## 7. Výzkumné výzvy
 
-Manifest identifikuje klíčové otevřené výzkumné problémy:
+### Specifické výzvy pro jednotlivé schopnosti
 
-1. **Definice agenta v business procesech** — co přesně je agent v kontextu BPM?
+1. **Definice agenta v business procesech** — před rozšířením LLM pojem agenta nehrál větší roli v inženýringu podnikových informačních systémů; je třeba definovat robustnější a intuitivně pochopitelný pojem agenta pro BPM praktiky
 2. **Specifikace a operacionalizace** rámcové autonomie
 3. **Sociální kontrakty** mezi lidskými a digitálními agenty — definice hranic delegace
 4. **Právní a operační podmínky** lidské intervence
 5. **Inženýrské metody** pro návrh APM systémů
 6. **Překlenutí komunit** BPM, AI a MAS
+7. **Zajištění, že sebemodifikace neporušuje procesní rámce** — mechanismy pro řízené učení a adaptaci
+
+### Průřezové výzvy
+
+- **Bezpečnostní rámce** — řízení kompromisu mezi autonomií agentů a informační bezpečností; zajištění, že agenti mohou vyjednávat a adaptovat se, aniž by byla ohrožena integrita a důvěrnost
+- **Hodnoticí rámce** — tradiční BPM charakteristiky (čas, náklady, kvalita) nestačí k souhrnné charakterizaci kvalit agentů; chybí holistické hodnoticí rámce
+- **Přemostění disciplín** — manifest slouží jako roadmapa pro sblížení komunit BPM, AI a MAS
 
 ---
 
@@ -158,8 +176,9 @@ Studie je připravena pro publikaci v **Information Systems**.
 
 | Studie | arXiv ID | Zaměření |
 |--------|----------|----------|
-| Agentic BPM: Practitioner Perspectives | 2504.03693 | Governance výzvy z pohledu praktiků |
+| AI-Augmented BPM Systems: A Research Manifesto (předchůdce) | 2201.12855 | Definoval ABPMS jako novou třídu procesně vědomých IS; postuloval 5 schopností: autonomie, konverzační akcionovatelnost, adaptivita, sebezlepšování, vysvětlitelnost |
 | Agentic BPM Systems | 2601.18833 | Architektonická vize A-BPMS s integrací autonomie, reasoning a learning |
+| Agentic BPM: Practitioner Perspectives | 2504.03693 | Kvalitativní studie s 22 BPM praktiky — očekávají zvýšení efektivity a lepší compliance, ale varují před riziky zaujatosti, nadměrné závislosti a nejasného rozhodování |
 | PMAx: Agentic Framework for AI-Driven Process Mining | 2603.15351 | Nástroj pro agentický process mining |
 
 ---
